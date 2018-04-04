@@ -32,6 +32,9 @@ import heapq, random
 import cStringIO
 
 
+from itertools import permutations
+
+
 class FixedRandom:
     def __init__(self):
         fixedState = (3, (2147483648L, 507801126L, 683453281L, 310439348L, 2597246090L, \
@@ -241,9 +244,32 @@ def closestManhDistPoint(start, points):
     return closestManhDistPoint, manhattanDistance(start, closestManhDistPoint)
 
 
-def sameLine(point1, point2):
-    """Returns true if point1 and point2 share a horizontal or vertical line. False otherwise."""
-    return ((point1[0] == point2[0]) or (point1[1] == point2[1]))
+def totalManhDistance(points):
+    """
+    Returns the length of the path passing throught
+    all the points in the given order.
+
+    >>> totalManhDistance([[1,2],[4,6]])
+    5.0
+    >>> totalManhDistance([[3,6],[7,6],[12,6]])
+    9.0
+    """
+    return sum([manhattanDistance(point, points[index + 1]) for index, point in enumerate(points[:-1])])
+
+
+def manhDistTravellingSalesman(points, start=None):
+    """
+    Finds the shortest route to visit all the cities by bruteforce.
+    Time complexity is O(N!), so never use on long lists.
+
+    >>> travellingSalesman([[0,0],[10,0],[6,0]])
+    ([0, 0], [6, 0], [10, 0])
+    >>> travellingSalesman([[0,0],[6,0],[2,3],[3,7],[0.5,9],[3,5],[9,1]])
+    ([0, 0], [6, 0], [9, 1], [2, 3], [3, 5], [3, 7], [0.5, 9])
+    """
+    if start is None:
+        start = points[0]
+    return min([perm for perm in permutations(points) if perm[0] == start], key=totalManhDistance)
 
 
 """
