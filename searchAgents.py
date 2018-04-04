@@ -438,14 +438,6 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 
-def adjNodesShortestPathLength(nodes, startNode):
-    """Method that calculates the shortest path length between a given set of nodes.
-    It is assumed that the start is given such that it generates a Spanning Tree.
-    """
-    tmp1 = nodes
-    while isEmpty(tmp1) is False:
-        
-
 
 def cornersHeuristic(state, problem):
     """
@@ -459,57 +451,25 @@ def cornersHeuristic(state, problem):
     This function should always return a number that is a lower bound on the
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
+
+
+    We model the Heuristic as a Rectilinear Traveling Salesman Problem with Repetitions allowed (though actually we just convert the problem to a classic TSP).
+    The cities are the remaining/unvisited corners, plus the actual position (which is also the start citie), and the distances between cities is given by the
+    Manhattan Distance. This satisfies the triangle inequality, because the Manhattan distance between a point in the maze and a corner, or between 2 corners,
+    will never be higher than if it takes an intermediary corner.
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
+    currentPosition = state[0]
+    cornersVisitedStates = state[2]
+    stateObj = CornersProblemState(currentPosition, corners, cornersVisitedStates)
+    unvisitedCorners = stateObj.getUnvisitedCorners()
 
-    unvisitedCorners = state.getUnvisitedCorners()
-    
-    for corner in corners:
-        if corner == corners[0]:  # Skip first iteration
-            continue
-        # If the current corner is adjacent (same row) to the first corner
-        if corner[0] == corners[0][0] and corner[1] != corners[0][1]: 
-            height = abs(corners[0][1] - corner[1])  # Save the height
-        # If the current corner is adjacent (same column) to the first corner
-        if corner[0] != corners[0][0] and corner[1] == corners[0][1]: 
-            length = abs(corners[0][0] - corner[0])  # Save the length
+    shortestTour = util.manhDistTravellingSalesman([currentPosition] + list(unvisitedCorners))
 
-
-    if len(unvisitedCorners) == len(corners):  # If we didn't visit any corner
-        # Then just return the sum of the Manhattan Distance to the closest corner,
-        # and the total sum of the Mnhattan Distances between each adjacent corner (which is the rectangle perimeter)
-        return util.closestManhDistPoint(state.getPosition(), unvisitedCorners)[1] + 2*(length + height)
-
-    for unvisitedCorner in unvisitedCorners:
-        unvisitedCornersFanIn[unvisitedCorner] = 0
-
-    for unvisitedCorner in unvisitedCorners:
-        # Contains the unvisited Corners different from the iterating one
-        unvisitedCorners2 = [unvisitedCorner2 for unvisitedCorner2 in unvisitedCorners if unvisitedCorner != unvisitedCorner2]
-        # X Coordinates of the unvisited Corners different from the iterating one
-        unvisitedCorners2x = [unvisitedCorner2[0] for unvisitedCorner2 in unvisitedCorners2]
-        unvisitedCorners2x = set(unvisitedCorners2x)
-        # Y Coordinates of the unvisited Corners different from the iterating one
-        unvisitedCorners2y = [unvisitedCorner2[1] for unvisitedCorner2 in unvisitedCorners2]
-        unvisitedCorners2y = set(unvisitedCorners2y)
-
-        # Check if current Unvisited Corner has Unvisited Neighboors (different from itself), and sum 1 for each one (count them)
-        if (unvisitedCorner[0] in unvisitedCorners2x)
-                or (unvisitedCorner[1] in unvisitedCorners2y):
-            unvisitedCornersFanIn[unvisitedCorner] += 1
-    
-    # Set that contains the unvisited corners that have less than 2 neighboors
-    unvisitedCornersFanInLT2 = [unvisitedCorner for unvisitedCorner in unvisitedCorners if unvisitedCornersFanIn[unvisitedCorner] < 2]
-    unvisitedCornersFanInLT2 = set(unvisitedCornersFanInLT2)
-
-    # Here we save the position of the closest unvisited corner (according to the Manhattan Distance) that has less than 2 neighboors 
-    # different from itself. I.e. the closest "end" of the polygon formed by the unvisited corners
-    closestManhDistUnvisitedCornerFanInLT2,  closestManhDist = util.closestManhDistPoint(state.getPosition(), unvisitedCornersFanInLT2)
-    # closestManhDistUnvisitedCorner,  closestManhDist = util.closestManhDistPoint(state.getPosition(), unvisitedCorners)
-    tmp1 = [tmp2 for tmp2 in closestManhDistUnvisitedCornerFanInLT2]
+    return util.totalManhDistance(shortestTour)
 
     # return 0 # Default to trivial solution
 
